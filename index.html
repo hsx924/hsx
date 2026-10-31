@@ -2356,6 +2356,13 @@ class Game {
       this.unlockedShips=data.unlockedShips||['raptor','vanguard','titan','falcon'];
       this.endlessBest=data.endlessBest||0;
       this.customDifficulty=data.customDifficulty||{enabled:false,enemyHp:1.0,enemySpeed:1.0,enemyDamage:1.0,dropRate:1.0,bossHp:1.0,playerHp:1.0,playerDamage:1.0};
+      // 老存档迁移：按关卡进度补发应得战机（修复历史存档战机锁死）
+      const migUnlocks={2:'phantom',4:'guardian',6:'weaver',8:'glacier',9:'nova',10:'reaper'};
+      for(const mk in migUnlocks){
+        if(this.unlockedLevels>parseInt(mk,10)&&!this.unlockedShips.includes(migUnlocks[mk])){
+          this.unlockedShips.push(migUnlocks[mk]);
+        }
+      }
     }catch(e){
       this.unlockedLevels=1;this.bestScores={};this.totalScore=0;this.totalCores=0;this.endlessBest=0;
       this.upgrades={damage:0,speed:0,shield:0,energy:0,regen:0};
@@ -3790,11 +3797,13 @@ class Game {
     this.showNotification(b.name+' 已被击败！');
     if(this.currentLevel+1>=this.unlockedLevels&&this.currentLevel+1<=this.levels.length){
       this.unlockedLevels=Math.min(this.currentLevel+2,this.levels.length);
-      const unlocks={2:'phantom',4:'guardian',6:'weaver',8:'glacier',9:'nova',10:'reaper'};
-      if(unlocks[this.currentLevel+1]&&!this.unlockedShips.includes(unlocks[this.currentLevel+1])){
-        this.unlockedShips.push(unlocks[this.currentLevel+1]);
-        this.showNotification('新战机解锁：'+unlocks[this.currentLevel+1].toUpperCase());
-      }
+    }
+    // 战机解锁独立于关卡进度门：重玩已解锁的旧关卡也能获得战机
+    const unlocks={2:'phantom',4:'guardian',6:'weaver',8:'glacier',9:'nova',10:'reaper'};
+    if(unlocks[this.currentLevel+1]&&!this.unlockedShips.includes(unlocks[this.currentLevel+1])){
+      this.unlockedShips.push(unlocks[this.currentLevel+1]);
+      this.showNotification('新战机解锁：'+unlocks[this.currentLevel+1].toUpperCase());
+      this.saveGame();
     }
     const runScore=this.score;
     const runCores=this.cores;
